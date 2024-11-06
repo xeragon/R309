@@ -1,0 +1,19 @@
+{
+    "servers" : [
+        {
+            "name" : "serveur1",
+            "host" : "localhost",
+            "port" : "8081"
+        },
+        {
+            "name" : "serveur2",
+            "host" : "localhost",
+            "port" : "8082"
+        },
+        {
+            "name" : "serveur3",
+            "host" : "localhost",
+            "port" : "8083"
+        }
+    ]
+}

@@ -1,8 +1,7 @@
 import socket
 import threading
-import signal
 host = "localhost"
-port = 8081
+port = 8080
 
 quitted = False
 
