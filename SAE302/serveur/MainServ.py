@@ -37,8 +37,9 @@ def main(host,port):
                 break   
             else:
                 print(f"connection to worker server {server} failed, retying in 3 seconds \n" )    
-            sleep(1)  
-                
+            sleep(3)  
+    
+    
     print("waiting for client connection...")
     while(True):
         conn, address = MainServSocket.accept()
