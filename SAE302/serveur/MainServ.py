@@ -9,7 +9,26 @@ import commons as c
 
 
 def connectionHandler(conn,adress):
-    print("got a connection")
+    while True:
+        request = conn.recv(1024).decode()
+        if not request: break
+        print(f"received {request}")
+        
+        if(request == "post"):
+            conn.send(("getfilename").encode())
+            fname = conn.recv(1024).decode()
+            print(f"received name {fname}")
+            filename = f"./files/{fname}"
+            fo = open(filename,"w")
+            conn.send(("rdy").encode())
+            
+            while True:
+                data = conn.recv(1024).decode()
+                if data == "end":   
+                    break
+                fo.write(data)
+            fo.close()
+            conn.send(("upload successfull").encode())
 
 
 def main(host,port): 

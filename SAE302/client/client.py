@@ -1,9 +1,61 @@
 import sys
 from time import sleep
-from PyQt5.QtCore import QSize, Qt
-
-from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QPushButton,QLineEdit,QLabel,QHBoxLayout,QVBoxLayout ; 
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import socket
+
+class Worker(QRunnable):
+    '''
+    Worker thread
+    '''
+    def __init__(self,client_socket,path):
+        super().__init__()
+        self.client_socket = client_socket
+        self.path = path
+
+    @pyqtSlot()
+    def run(self):
+        
+        filename_splited = self.path.split('/')
+        filename = filename_splited[len(filename_splited)-1]
+        file_extension = filename.split('.')[len(filename.split('.'))-1]
+        
+        if file_extension not in ["py","txt"]:
+            print("FileFormat not supported")
+            return
+
+        
+        try: 
+            fi = open(self.path, "r")
+            if not fi:
+                print("no fi")
+                return
+            
+            self.client_socket.send(("post").encode())
+            answer = self.client_socket.recv(1024).decode()
+            print(f"received from server : {answer}")
+            if answer == "getfilename":
+                self.client_socket.send(filename.encode()) 
+                
+            print(f"received from server : {answer}")
+            answer = self.client_socket.recv(1024).decode()
+            if answer == "rdy":
+                data = fi.read() 
+                while data: 
+                    self.client_socket.send(str(data).encode()) 
+                    data = fi.read() 
+                fi.close() 
+                self.client_socket.send(("end").encode())
+                answer = self.client_socket.recv(1024).decode()
+                # self.upload_label.setText(answer)
+                print(f"received from server : {answer}")
+                
+        except Exception as e:
+            print(f"error : {e}")
+            return
+    
+
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
@@ -11,7 +63,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("My App")
-        
+        self.threadpool = QThreadPool()
 
         main_layout = QVBoxLayout()
         
@@ -51,10 +103,23 @@ class MainWindow(QMainWindow):
         self.connect_label = QLabel("")
         connection_layout.addWidget(self.connect_btn)
         connection_layout.addWidget(self.connect_label)
+
+
+        upload_layout = QVBoxLayout()
+        
+        upload_btn = QPushButton("Upload")
+        upload_btn.clicked.connect(self.upload_file)
+        self.upload_label = QLabel("file")
+
+        upload_layout.addWidget(upload_btn)
+        upload_layout.addWidget(self.upload_label)
+            
         
         main_layout.addWidget(self.status)
         main_layout.addLayout(inputs_layout)
         main_layout.addLayout(connection_layout)
+        main_layout.addLayout(upload_layout)
+
 
         widget = QWidget()
         widget.setLayout(main_layout)
@@ -94,10 +159,19 @@ class MainWindow(QMainWindow):
         else:
             self.status.setStyleSheet("color: black") 
 
+
+
+    def upload_file(self):
+        fname = QFileDialog.getOpenFileName(self, 'Open file')
+        path = fname[0]
+        worker = Worker(self.client_socket,path)
+        self.threadpool.start(worker)
+      
+    
+    
 app = QApplication(sys.argv)
 
 window = MainWindow()
 window.show()
 
 app.exec()
-
