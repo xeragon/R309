@@ -10,24 +10,18 @@ class WorkerServer():
         self.port = port
         self.name = name
     
-    def set_connection(self):
+    def set_connection(self) -> int:
         try:
             mysocket = socket.socket()
             mysocket.connect((self.host,self.port))
             self.socket = mysocket
             return 1
         except:
-            return 0        
+            return 0
         
-
-        
-
     def __str__(self) -> str:
         return f"{self.name} {self.host}:{self.port}"
-    
-
-
-    
+        
 def main(host,port,name):
     worker = WorkerServer(host,port,name)
     try:
@@ -41,7 +35,6 @@ def main(host,port,name):
     print(f"worker {name} started on {host}:{port} and waiting for connection")
     conn,adress = worker_socket.accept()
     print(f"worker {worker} got connection")
-    
     
 
 if __name__ == "__main__":

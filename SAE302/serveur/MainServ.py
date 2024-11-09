@@ -8,6 +8,8 @@ from time import sleep
 import commons as c
 
 
+connected_workers = []
+
 def connectionHandler(conn,adress):
     while True:
         request = conn.recv(1024).decode()
@@ -29,10 +31,25 @@ def connectionHandler(conn,adress):
                 fo.write(data)
             fo.close()
             conn.send(("upload successfull").encode())
+        elif(request == "close"):
+            conn.close()
+            print("closed connection")
+            break
 
+def connect_to_worker(worker : WorkerServer):
+    global connected_workers
+    while (True):
+        print(f"connecting to worker server -> {worker} ...")
+        connected = worker.set_connection()
+        if connected:
+            print(f"connected to worker server -> {worker}\n")   
+            break   
+        else:
+            print(f"connection to worker server {worker} failed, retying in 3 seconds \n" )    
+        sleep(3)  
 
 def main(host,port): 
-       
+    global connected_workers
     print(f"starting socket server on {host}:{port} ...")
     
     try:
@@ -46,18 +63,13 @@ def main(host,port):
 
 
     worker_servers : list[WorkerServer] = extract_workers_config("config.json")
+    worker_threads = []
     
     for server in worker_servers:
-        while (True):
-            print(f"connecting to worker server -> {server} ...")
-            connected = server.set_connection()
-            if connected:
-                print(f"connected to worker server -> {server}\n")   
-                break   
-            else:
-                print(f"connection to worker server {server} failed, retying in 3 seconds \n" )    
-            sleep(3)  
-    
+        t = threading.Thread(target=connect_to_worker,args=[server])
+        t.daemon = True
+        t.start()
+        worker_threads.append(t)
     
     print("waiting for client connection...")
     while(True):

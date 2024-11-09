@@ -6,13 +6,13 @@ from PyQt5.QtCore import *
 import socket
 
 class Worker(QRunnable):
-    '''
-    Worker thread
-    '''
-    def __init__(self,client_socket,path):
+    def __init__(self,client_socket,path,uploads_list : QListWidget):
         super().__init__()
         self.client_socket = client_socket
         self.path = path
+        self.uploads_list = uploads_list
+        
+
 
     @pyqtSlot()
     def run(self):
@@ -21,11 +21,16 @@ class Worker(QRunnable):
         filename = filename_splited[len(filename_splited)-1]
         file_extension = filename.split('.')[len(filename.split('.'))-1]
         
+        uploadedWidget = QListWidgetItem(f"{filename} uploading...",self.uploads_list)
+        uploadedWidget.setBackground(QColor("lightorange")) 
+       
         if file_extension not in ["py","txt"]:
             print("FileFormat not supported")
+            uploadedWidget.setText(f"{filename} failed : file format not supported")
+            uploadedWidget.setBackground(QColor("red")) 
             return
-
         
+
         try: 
             fi = open(self.path, "r")
             if not fi:
@@ -35,6 +40,7 @@ class Worker(QRunnable):
             self.client_socket.send(("post").encode())
             answer = self.client_socket.recv(1024).decode()
             print(f"received from server : {answer}")
+            
             if answer == "getfilename":
                 self.client_socket.send(filename.encode()) 
                 
@@ -50,9 +56,15 @@ class Worker(QRunnable):
                 answer = self.client_socket.recv(1024).decode()
                 # self.upload_label.setText(answer)
                 print(f"received from server : {answer}")
+                uploadedWidget.setText(f"{filename} uploaded")
+                uploadedWidget.setBackground(QColor("lightgreen")) 
+
+
                 
         except Exception as e:
             print(f"error : {e}")
+            uploadedWidget.setText(f"{filename} failed")
+            uploadedWidget.setBackground(QColor("lightred")) 
             return
     
 
@@ -61,7 +73,7 @@ class Worker(QRunnable):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.client_socket = None
         self.setWindowTitle("My App")
         self.threadpool = QThreadPool()
 
@@ -107,18 +119,22 @@ class MainWindow(QMainWindow):
 
         upload_layout = QVBoxLayout()
         
-        upload_btn = QPushButton("Upload")
-        upload_btn.clicked.connect(self.upload_file)
-        self.upload_label = QLabel("file")
-
-        upload_layout.addWidget(upload_btn)
+        self.upload_btn = QPushButton("Upload")
+        self.upload_btn.clicked.connect(self.upload_file)
+        self.upload_btn.setEnabled(False)
+        self.upload_label = QLabel("")
+        upload_layout.addWidget(self.upload_btn)
         upload_layout.addWidget(self.upload_label)
             
+            
+        self.uploads_list = QListWidget()
+        
         
         main_layout.addWidget(self.status)
         main_layout.addLayout(inputs_layout)
         main_layout.addLayout(connection_layout)
         main_layout.addLayout(upload_layout)
+        main_layout.addWidget(self.uploads_list)
 
 
         widget = QWidget()
@@ -128,25 +144,32 @@ class MainWindow(QMainWindow):
     
     def connect_to_main_serv(self):  
         
-        print(f"values {self.host_input.text(),self.port_input.text()}")
-        
-        self.connect_btn.setEnabled(False)
-        self.connect_btn.setText("Connecting...")
-        self.status.setText("connecting")
+        if not self.client_socket:
+            self.connect_btn.setEnabled(False)
+            self.connect_btn.setText("Connecting...")
+            self.status.setText("connecting")
 
-        try:
-            self.client_socket = socket.socket()
-            self.client_socket.connect((self.host_input.text(),int(self.port_input.text())))
-            self.connect_label.setText(f"successfuly connected")
-            self.status.setText("connected")
-        except Exception as e:
-            errmsg = f'an error occured while trying to connect to server : {e}'
-            self.connect_label.setText(errmsg)
-            print(errmsg)
-        
-        self.connect_btn.setEnabled(True)
-        self.connect_btn.setText("Connect to server")
-        
+            try:
+                self.client_socket = socket.socket()
+                self.client_socket.connect((self.host_input.text(),int(self.port_input.text())))
+                self.connect_label.setText(f"successfuly connected")
+                self.status.setText("connected")
+            except Exception as e:
+                errmsg = f'an error occured while trying to connect to server : {e}'
+                self.connect_label.setText(errmsg)
+                print(errmsg)
+            
+            self.connect_btn.setEnabled(True)
+            self.upload_btn.setEnabled(True)
+            self.connect_btn.setText("Disconnect")
+            
+        else:
+            self.client_socket.send(("close").encode())
+            self.client_socket.close()
+            self.client_socket = None
+            self.upload_btn.setEnabled(False)
+            self.status.setText("disconnected")
+            self.connect_btn.setText("Connect")
         
         
     def status_text_changed(self):
@@ -164,8 +187,9 @@ class MainWindow(QMainWindow):
     def upload_file(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file')
         path = fname[0]
-        worker = Worker(self.client_socket,path)
-        self.threadpool.start(worker)
+        worker = Worker(self.client_socket,path,self.uploads_list)
+        if path != "":
+            self.threadpool.start(worker)
       
     
     
