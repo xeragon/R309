@@ -8,30 +8,24 @@ from time import sleep
 import commons as c
 
 
-connected_workers = []
+connected_workers : list[WorkerServer] = []
 
 def connectionHandler(conn,adress):
+    global connected_workers
+    
     while True:
-        request = conn.recv(1024).decode()
+        filename = conn.recv(1024).decode()
         if not request: break
         print(f"received {request}")
-        
-        if(request == "post"):
-            conn.send(("getfilename").encode())
-            fname = conn.recv(1024).decode()
-            print(f"received name {fname}")
-            filename = f"./files/{fname}"
-            fo = open(filename,"w")
-            conn.send(("rdy").encode())
-            
+        # reprendre heeereeee
+        if(request != "end"):
             while True:
-                data = conn.recv(1024).decode()
-                if data == "end":   
-                    break
-                fo.write(data)
-            fo.close()
+                data = conn.recv(1024)
+                connected_workers[0].w_socket.send(data)
+                if data.decode() == "end":
+                    break  
             conn.send(("upload successfull").encode())
-        elif(request == "close"):
+        else:
             conn.close()
             print("closed connection")
             break
@@ -43,6 +37,7 @@ def connect_to_worker(worker : WorkerServer):
         connected = worker.set_connection()
         if connected:
             print(f"connected to worker server -> {worker}\n")   
+            connected_workers.append(worker)
             break   
         else:
             print(f"connection to worker server {worker} failed, retying in 3 seconds \n" )    
@@ -52,8 +47,8 @@ def main(host,port):
     global connected_workers
     print(f"starting socket server on {host}:{port} ...")
     
+    MainServSocket = socket.socket()
     try:
-        MainServSocket = socket.socket()
         MainServSocket.bind((host, int(port)))
         MainServSocket.listen(1)
     except Exception as e:
@@ -73,7 +68,7 @@ def main(host,port):
     
     print("waiting for client connection...")
     while(True):
-        conn, address = MainServSocket.accept()
+        conn,address = MainServSocket.accept()
         t = threading.Thread(target=connectionHandler,args=[conn,address])
         t.daemon = True
         t.start()

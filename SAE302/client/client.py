@@ -36,28 +36,18 @@ class Worker(QRunnable):
             if not fi:
                 print("no fi")
                 return
-            
             self.client_socket.send(("post").encode())
-            answer = self.client_socket.recv(1024).decode()
-            print(f"received from server : {answer}")
-            
-            if answer == "getfilename":
-                self.client_socket.send(filename.encode()) 
-                
-            print(f"received from server : {answer}")
-            answer = self.client_socket.recv(1024).decode()
-            if answer == "rdy":
+            data = fi.read() 
+            while data: 
+                self.client_socket.send(str(data).encode()) 
                 data = fi.read() 
-                while data: 
-                    self.client_socket.send(str(data).encode()) 
-                    data = fi.read() 
-                fi.close() 
-                self.client_socket.send(("end").encode())
-                answer = self.client_socket.recv(1024).decode()
-                # self.upload_label.setText(answer)
-                print(f"received from server : {answer}")
-                uploadedWidget.setText(f"{filename} uploaded")
-                uploadedWidget.setBackground(QColor("lightgreen")) 
+            fi.close() 
+            self.client_socket.send(("end").encode())
+            answer = self.client_socket.recv(1024).decode()
+            # self.upload_label.setText(answer)
+            print(f"received from server : {answer}")
+            uploadedWidget.setText(f"{filename} uploaded")
+            uploadedWidget.setBackground(QColor("lightgreen")) 
 
 
                 

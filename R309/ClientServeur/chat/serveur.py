@@ -2,7 +2,7 @@ import socket
 import threading
 
 host = "localhost"
-port = 8080
+port = 8081
 reply = "serveur hello"
 message = ""
 quitted = False
