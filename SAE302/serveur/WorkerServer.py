@@ -11,6 +11,7 @@ class WorkerServer():
         self.port = port
         self.name = name
         self.file_index = 0
+        
     def set_connection(self) -> int:
         try:
             mysocket = socket.socket()
@@ -56,7 +57,7 @@ def main(host,port,name):
                 break
             fo.write(data)
         fo.close()
-        self.file_index += 1
+       
 
         
 

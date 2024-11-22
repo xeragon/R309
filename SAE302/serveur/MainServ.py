@@ -15,14 +15,15 @@ def connectionHandler(conn,adress):
     
     while True:
         filename = conn.recv(1024).decode()
-        if not request: break
-        print(f"received {request}")
-        # reprendre heeereeee
-        if(request != "end"):
+        if not filename: break
+        print(f"received filename {filename}")
+        
+        if(filename != "end"):
+            connected_workers[0].w_socket.send(filename.encode())
+            conn.send(("rdy").encode())
             while True:
-                data = conn.recv(1024)
-                connected_workers[0].w_socket.send(data)
-                if data.decode() == "end":
+                data = conn.recv(1024).decode()
+                if data == "end":
                     break  
             conn.send(("upload successfull").encode())
         else:
