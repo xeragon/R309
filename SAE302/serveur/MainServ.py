@@ -23,10 +23,11 @@ def connectionHandler(conn,adress):
             conn.send(("rdy").encode())
             while True:
                 data = conn.recv(1024).decode()
+                connected_workers[0].w_socket.send(data.encode())
                 if data == "end":
                     break  
-            conn.send(("upload successfull").encode())
         else:
+            connected_workers[0].w_socket.send(("end").encode())
             conn.close()
             print("closed connection")
             break

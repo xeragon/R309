@@ -2,6 +2,8 @@ import socket
 import threading
 import sys
 import commons as c
+import os
+import subprocess
 
 class WorkerServer():
     w_socket : socket.socket
@@ -43,7 +45,7 @@ def main(host,port,name):
     
     # gestion upload
     while True:
-        # il faudrait gerer les erreurs ici aussi d'extension ici aussi
+        # il faudrait gerer les erreurs d'extension ici aussi
         filename = conn.recv(1024).decode()
         try:
             # filename = f"./files/file_{worker.name}_{self.file_index}"
@@ -53,10 +55,21 @@ def main(host,port,name):
             print(f"error {e}")
         while True:
             data = conn.recv(1024).decode()
+            print(f"data {data}")
             if data == "end":   
                 break
             fo.write(data)
+            
         fo.close()
+        file_extension = filename.split('.')[-1]
+        match file_extension:
+            case "py":
+                s = subprocess.run(["python3",filename],capture_output=True)
+                print(f"call : {s.__str__()}")
+                conn.send(s.__str__().encode())
+            case "java":
+                pass
+        
        
 
         

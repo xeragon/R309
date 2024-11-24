@@ -17,7 +17,7 @@ class Worker(QRunnable):
         
         filename_splited = self.path.split('/')
         filename = filename_splited[len(filename_splited)-1]
-        file_extension = filename.split('.')[len(filename.split('.'))-1]
+        file_extension = filename.split('.')[-1]
         
         uploadedWidget = QListWidgetItem(f"{filename} uploading...",self.uploads_list)
         uploadedWidget.setBackground(QColor("lightorange")) 
