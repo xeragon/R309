@@ -4,6 +4,7 @@ import sys
 import commons as c
 import os
 import subprocess
+import json
 
 class WorkerServer():
     w_socket : socket.socket
@@ -65,8 +66,15 @@ def main(host,port,name):
         match file_extension:
             case "py":
                 s = subprocess.run(["python3",filename],capture_output=True)
-                print(f"call : {s.__str__()}")
-                conn.send(s.__str__().encode())
+                text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                res = json.dumps({
+                    "command": s.args,
+                    "output": s.stdout.decode('utf-8'),
+                    "errors": s.stderr.decode('utf-8')
+                })                
+                print(res)
+
+                conn.send(res.encode())
             case "java":
                 pass
         

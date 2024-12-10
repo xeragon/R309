@@ -24,13 +24,19 @@ def connectionHandler(conn,adress):
             while True:
                 data = conn.recv(1024).decode()
                 connected_workers[0].w_socket.send(data.encode())
+                
                 if data == "end":
+                    result = connected_workers[0].w_socket.recv(1024)
+                    print(f"result {result}")
+                    conn.send(result)
                     break  
         else:
             connected_workers[0].w_socket.send(("end").encode())
             conn.close()
             print("closed connection")
             break
+
+
 
 def connect_to_worker(worker : WorkerServer):
     global connected_workers

@@ -4,13 +4,27 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import socket
+import json
+
+
+class ResultDialog(QDialog):
+    def __init__(self,code_result):
+        super().__init__()
+        self.setWindowTitle("Result")
+        self.code_result = code_result
+        layout = QVBoxLayout()
+        message = QLabel(code_result)
+        layout.addWidget(message)
+        self.setLayout(layout)
+        
 
 class Worker(QRunnable):
-    def __init__(self,client_socket,path,uploads_list : QListWidget):
+    def __init__(self,client_socket,path,uploads_list : QListWidget, responses_list : list):
         super().__init__()
         self.client_socket = client_socket
         self.path = path
         self.uploads_list = uploads_list
+        self.responses_list = responses_list
 
     @pyqtSlot()
     def run(self):
@@ -39,16 +53,22 @@ class Worker(QRunnable):
             answer = self.client_socket.recv(1024).decode()
             if(answer == "rdy"):
                 data = fi.read() 
+
                 while data: 
                     self.client_socket.send(str(data).encode()) 
                     data = fi.read() 
+
                 fi.close() 
                 self.client_socket.send(("end").encode())
+                
                 answer = self.client_socket.recv(1024).decode()
                 # self.upload_label.setText(answer)
                 print(f"received from server : {answer}")
+                self.responses_list.append(answer)
+                
                 uploadedWidget.setText(f"{filename} uploaded")
                 uploadedWidget.setBackground(QColor("lightgreen")) 
+                
             else:
                 raise Exception
 
@@ -59,15 +79,16 @@ class Worker(QRunnable):
             uploadedWidget.setBackground(QColor("lightred")) 
             return
     
+    
 
 
-# Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.client_socket = None
         self.setWindowTitle("My App")
         self.threadpool = QThreadPool()
+        self.responses_list = []
 
         main_layout = QVBoxLayout()
         
@@ -119,7 +140,8 @@ class MainWindow(QMainWindow):
         upload_layout.addWidget(self.upload_label)
             
             
-        self.uploads_list = QListWidget()
+        self.uploads_list : QListWidget = QListWidget()
+        self.uploads_list.currentItemChanged.connect(self.uploaded_clicked)
         
         
         main_layout.addWidget(self.status)
@@ -127,6 +149,7 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(connection_layout)
         main_layout.addLayout(upload_layout)
         main_layout.addWidget(self.uploads_list)
+        
 
 
         widget = QWidget()
@@ -134,6 +157,11 @@ class MainWindow(QMainWindow):
         self.setFixedSize(QSize(800,600))
         self.setCentralWidget(widget)
     
+    def uploaded_clicked(self,selected):
+        print(self.uploads_list.currentIndex().row())
+        dlg = ResultDialog(self.responses_list[self.uploads_list.currentIndex().row()])
+        dlg.exec()
+        
     def connect_to_main_serv(self):  
         
         if not self.client_socket:
@@ -177,7 +205,7 @@ class MainWindow(QMainWindow):
     def upload_file(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file')
         path = fname[0]
-        worker = Worker(self.client_socket,path,self.uploads_list)
+        worker = Worker(self.client_socket,path,self.uploads_list,self.responses_list)
         if path != "":
             self.threadpool.start(worker)
       
