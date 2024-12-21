@@ -18,20 +18,20 @@ def connectionHandler(conn,adress):
         if not filename: break
         print(f"received filename {filename}")
         
-        if(filename != "end"):
+        if(filename != "close"):
             connected_workers[0].w_socket.send(filename.encode())
             conn.send(("rdy").encode())
             while True:
-                data = conn.recv(1024).decode()
-                connected_workers[0].w_socket.send(data.encode())
+                data = conn.recv(1024)
+                connected_workers[0].w_socket.send(data)
                 
-                if data == "end":
+                if len(data) < 1024:
                     result = connected_workers[0].w_socket.recv(1024)
                     print(f"result {result}")
                     conn.send(result)
                     break  
         else:
-            connected_workers[0].w_socket.send(("end").encode())
+            connected_workers[0].w_socket.send((b''))
             conn.close()
             print("closed connection")
             break

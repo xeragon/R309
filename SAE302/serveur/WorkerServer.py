@@ -51,15 +51,20 @@ def main(host,port,name):
         try:
             # filename = f"./files/file_{worker.name}_{self.file_index}"
             filename = f"./files/{filename}"
-            fo = open(filename,"w")
+            fo = open(filename,"wb")
         except Exception as e:
             print(f"error {e}")
         while True:
-            data = conn.recv(1024).decode()
+            data = conn.recv(1024)
             print(f"data {data}")
-            if data == "end":   
+            
+            if not data:   
                 break
+            
             fo.write(data)
+
+            if len(data) < 1024:
+                break
             
         fo.close()
         file_extension = filename.split('.')[-1]

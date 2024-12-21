@@ -36,7 +36,7 @@ class Worker(QRunnable):
         uploadedWidget = QListWidgetItem(f"{filename} uploading...",self.uploads_list)
         uploadedWidget.setBackground(QColor("lightorange")) 
        
-        if file_extension not in ["py","txt"]:
+        if file_extension not in ["py","java","c"]:
             print("FileFormat not supported")
             uploadedWidget.setText(f"{filename} failed : file format not supported")
             uploadedWidget.setBackground(QColor("red")) 
@@ -44,7 +44,7 @@ class Worker(QRunnable):
         
 
         try: 
-            fi = open(self.path, "r")
+            fi = open(self.path, "rb")
             if not fi:
                 print("no fi")
                 return
@@ -52,15 +52,14 @@ class Worker(QRunnable):
         
             answer = self.client_socket.recv(1024).decode()
             if(answer == "rdy"):
-                data = fi.read() 
+                data = fi.read(1024) 
 
                 while data: 
-                    self.client_socket.send(str(data).encode()) 
-                    data = fi.read() 
+                    self.client_socket.send(data)
+                    data = fi.read(1024) 
 
                 fi.close() 
-                self.client_socket.send(("end").encode())
-                
+            
                 answer = self.client_socket.recv(1024).decode()
                 # self.upload_label.setText(answer)
                 print(f"received from server : {answer}")
