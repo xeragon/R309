@@ -51,6 +51,11 @@ def connect_to_worker(worker : WorkerServer):
             print(f"connection to worker server {worker} failed, retying in 3 seconds \n" )    
         sleep(3)  
 
+
+
+
+
+
 def main(host,port): 
     global connected_workers
     print(f"starting socket server on {host}:{port} ...")
@@ -75,6 +80,7 @@ def main(host,port):
         worker_threads.append(t)
     
     print("waiting for client connection...")
+
     while(True):
         conn,address = MainServSocket.accept()
         t = threading.Thread(target=connectionHandler,args=[conn,address])

@@ -81,9 +81,39 @@ def main(host,port,name):
 
                 conn.send(res.encode())
             case "java":
-                pass
+                s = subprocess.run(["python3",filename],capture_output=True)
+                text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                res = json.dumps({
+                    "command": s.args,
+                    "output": s.stdout.decode('utf-8'),
+                    "errors": s.stderr.decode('utf-8')
+                })                
+                print(res)
+
+                conn.send(res.encode())
+            case "c":
+                compile = subprocess.run(["gcc",filename],capture_output=True)
+                if compile.returncode == 0:
+
+                    # s = subprocess.run(["./a.exe"],capture_output=True)
+                    
+                    s = subprocess.run(["./a.exe"],capture_output=True)
+                    
+                    text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                    res = json.dumps({
+                        "command": s.args,
+                        "output": s.stdout.decode('utf-8'),
+                        "errors": s.stderr.decode('utf-8')
+                    })                
+                else:
+                    res = json.dumps({
+                    "command": "gcc",
+                    "output": compile.stdout.decode('utf-8'),
+                    "errors": compile.stderr.decode('utf-8')
+                    })
         
-       
+                print(res)
+                conn.send(res.encode())
 
         
 
