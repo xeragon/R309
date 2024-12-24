@@ -48,6 +48,7 @@ def main(host,port,name):
     while True:
         # il faudrait gerer les erreurs d'extension ici aussi
         filename = conn.recv(1024).decode()
+        original_filename = filename
         try:
             # filename = f"./files/file_{worker.name}_{self.file_index}"
             filename = f"./files/{filename}"
@@ -81,23 +82,38 @@ def main(host,port,name):
 
                 conn.send(res.encode())
             case "java":
-                s = subprocess.run(["python3",filename],capture_output=True)
-                text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
-                res = json.dumps({
-                    "command": s.args,
-                    "output": s.stdout.decode('utf-8'),
-                    "errors": s.stderr.decode('utf-8')
-                })                
-                print(res)
+                compile = subprocess.run(["javac",filename],capture_output=True)
 
+
+                if compile.returncode == 0:
+
+                    print(f"org filename {original_filename.split('.')[0]}")
+                    s = subprocess.run(["java", "-cp", "./files", original_filename.split('.')[0]],capture_output=True)
+                         
+                    text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                    res = json.dumps({
+                        "command": s.args,
+                        "output": s.stdout.decode('utf-8'),
+                        "errors": s.stderr.decode('utf-8')
+                    })                
+                else:
+                    res = json.dumps({
+                    "command": f"javac {filename}",
+                    "output": compile.stdout.decode('utf-8'),
+                    "errors": compile.stderr.decode('utf-8')
+                    })
+        
+                print(res)
                 conn.send(res.encode())
             case "c":
                 compile = subprocess.run(["gcc",filename],capture_output=True)
                 if compile.returncode == 0:
 
-                    # s = subprocess.run(["./a.exe"],capture_output=True)
+                    if os.name == 'nt':
+                        s = subprocess.run(["./a.exe"],capture_output=True)
+                    else:
+                        s = subprocess.run(["./a.out"],capture_output=True)
                     
-                    s = subprocess.run(["./a.exe"],capture_output=True)
                     
                     text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
                     res = json.dumps({
