@@ -4,7 +4,7 @@ import threading
 import sys
 
 def startWorker(host,port,name):
-    os.system(f"python3 WorkerServer.py -h {host} -p {port} -n {name}")
+    os.system(f"python WorkerServer.py -h {host} -p {port} -n {name}")
     sys.exit(1)
     
 if __name__ == "__main__":

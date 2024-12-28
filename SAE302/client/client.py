@@ -17,6 +17,16 @@ class ResultDialog(QDialog):
         layout.addWidget(message)
         self.setLayout(layout)
         
+class ErrorDialog(QDialog):
+    def __init__(self,error):
+        super().__init__()
+        self.setWindowTitle("Error")
+        self.error = error
+        layout = QVBoxLayout()
+        message = QLabel(self.error)
+        layout.addWidget(message)
+        self.setLayout(layout)
+        
 
 class Worker(QRunnable):
     def __init__(self,client_socket,path,uploads_list : QListWidget, responses_list : list):
@@ -156,11 +166,18 @@ class MainWindow(QMainWindow):
         self.setFixedSize(QSize(800,600))
         self.setCentralWidget(widget)
     
-    def uploaded_clicked(self,selected):
-        print(self.uploads_list.currentIndex().row())
-        dlg = ResultDialog(self.responses_list[self.uploads_list.currentIndex().row()])
-        dlg.exec()
-        
+    def uploaded_clicked(self):
+        try:     
+            if self.uploads_list.currentIndex().row() < len(self.responses_list):
+                res = self.responses_list[self.uploads_list.currentIndex().row()]
+                dlg = ResultDialog(res)
+                dlg.exec()
+            else:
+                dlg = ErrorDialog("index error")
+                dlg.exec()
+        except Exception as e:
+            dlg = ErrorDialog(e)
+            dlg.exec()
     def connect_to_main_serv(self):  
         
         if not self.client_socket:
