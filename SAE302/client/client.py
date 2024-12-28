@@ -11,11 +11,38 @@ class ResultDialog(QDialog):
     def __init__(self,code_result):
         super().__init__()
         self.setWindowTitle("Result")
-        self.code_result = code_result
-        layout = QVBoxLayout()
-        message = QLabel(code_result)
-        layout.addWidget(message)
-        self.setLayout(layout)
+        self.code_result = json.loads(code_result)
+        mainLayout = QVBoxLayout()
+        
+        commandLayout = QHBoxLayout()
+        commandLabel = QLabel("Command")
+        commandText = QTextEdit(str(self.code_result["command"]))
+        commandText.setEnabled(False) 
+        commandLayout.addWidget(commandLabel)
+        commandLayout.addWidget(commandText)
+        
+        outputLayout = QHBoxLayout()
+        outputLabel = QLabel("Output")
+        outputText = QTextEdit(self.code_result["output"])
+        outputText.setEnabled(False) 
+        outputLayout.addWidget(outputLabel)
+        outputLayout.addWidget(outputText)
+        
+        errorLayout = QHBoxLayout()
+        errorLabel = QLabel("Errors")
+        errorText = QTextEdit(self.code_result["errors"])
+        errorText.setEnabled(False) 
+        errorLayout.addWidget(errorLabel)
+        errorLayout.addWidget(errorText)
+               
+        # message = QLabel(code_result)
+        # mainLayout.addWidget(message)
+        mainLayout.addLayout(commandLayout)
+        mainLayout.addLayout(outputLayout)
+        mainLayout.addLayout(errorLayout)
+        self.setLayout(mainLayout)
+        
+        
         
 class ErrorDialog(QDialog):
     def __init__(self,error):
@@ -176,7 +203,7 @@ class MainWindow(QMainWindow):
                 dlg = ErrorDialog("index error")
                 dlg.exec()
         except Exception as e:
-            dlg = ErrorDialog(e)
+            dlg = ErrorDialog("an error occured while trying to open results")
             dlg.exec()
     def connect_to_main_serv(self):  
         

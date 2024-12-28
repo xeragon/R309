@@ -71,64 +71,75 @@ def main(host,port,name):
         file_extension = filename.split('.')[-1]
         match file_extension:
             case "py":
-                s = subprocess.run(["python3",filename],capture_output=True)
+                s = subprocess.run(["python",filename],capture_output=True,encoding="locale")
                 text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
                 res = json.dumps({
                     "command": s.args,
-                    "output": s.stdout.decode('utf-8'),
-                    "errors": s.stderr.decode('utf-8')
+                    "output": s.stdout,
+                    "errors": s.stderr
                 })                
                 print(res)
 
                 conn.send(res.encode())
             case "java":
-                compile = subprocess.run(["javac",filename],capture_output=True)
+                try:
+                    compile = subprocess.run(["javac",filename],capture_output=True,encoding="locale")
+                    if compile.returncode == 0:
 
-
-                if compile.returncode == 0:
-
-                    print(f"org filename {original_filename.split('.')[0]}")
-                    s = subprocess.run(["java", "-cp", "./files", original_filename.split('.')[0]],capture_output=True)
-                         
-                    text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                        print(f"org filename {original_filename.split('.')[0]}")
+                        s = subprocess.run(["java", "-cp", "./files", original_filename.split('.')[0]],capture_output=True,encoding="locale")
+                            
+                        text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                        res = json.dumps({
+                            "command": s.args,
+                            "output": s.stdout,
+                            "errors": s.stderr
+                        })                
+                    else:
+                        res = json.dumps({
+                        "command": f"javac {filename}",
+                        "output": compile.stdout,
+                        "errors": compile.stderr
+                        })
+                except Exception as e:
                     res = json.dumps({
-                        "command": s.args,
-                        "output": s.stdout.decode('utf-8'),
-                        "errors": s.stderr.decode('utf-8')
-                    })                
-                else:
-                    res = json.dumps({
-                    "command": f"javac {filename}",
-                    "output": compile.stdout.decode('utf-8'),
-                    "errors": compile.stderr.decode('utf-8')
+                        "command": "error occured",
+                        "output": "",
+                        "errors": "An error occured while compiling/executing code"  
                     })
         
                 print(res)
                 conn.send(res.encode())
             case "c":
-                compile = subprocess.run(["gcc",filename],capture_output=True)
-                if compile.returncode == 0:
+                try:
+                    compile = subprocess.run(["gcc",filename],capture_output=True,encoding="locale")
+                    if compile.returncode == 0:
 
-                    if os.name == 'nt':
-                        s = subprocess.run(["./a.exe"],capture_output=True)
+                        if os.name == 'nt':
+                            s = subprocess.run(["./a.exe"],capture_output=True,encoding="locale")
+                        else:
+                            s = subprocess.run(["./a.out"],capture_output=True,encoding="locale")
+                        
+                        
+                        text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                        res = json.dumps({
+                            "command": s.args,
+                            "output": s.stdout,
+                            "errors": s.stderr
+                        })                
                     else:
-                        s = subprocess.run(["./a.out"],capture_output=True)
-                    
-                    
-                    text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
+                        res = json.dumps({
+                        "command": "gcc",
+                        "output": compile.stdout,
+                        "errors": compile.stderr
+                        })
+                except Exception as e:
                     res = json.dumps({
-                        "command": s.args,
-                        "output": s.stdout.decode('utf-8'),
-                        "errors": s.stderr.decode('utf-8')
-                    })                
-                else:
-                    res = json.dumps({
-                    "command": "gcc",
-                    "output": compile.stdout.decode('utf-8'),
-                    "errors": compile.stderr.decode('utf-8')
+                        "command": "error occured",
+                        "output": "",
+                        "errors": "An error occured while compiling/executing code"  
                     })
-        
-                print(res)
+                print(f"RESPONSE {res}")
                 conn.send(res.encode())
 
         
