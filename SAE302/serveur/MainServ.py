@@ -19,19 +19,29 @@ def connectionHandler(conn,adress):
         print(f"received filename {filename}")
         
         if(filename != "close"):
-            connected_workers[0].w_socket.send(filename.encode())
-            conn.send(("rdy").encode())
+            # connected_workers[0].w_socket.send(filename.encode())
+            choosedWorker = chooseWorker(connected_workers)
+            if choosedWorker:
+                choosedWorker.w_socket.send(filename.encode())
+                conn.send(("rdy").encode())
+                choosedWorker.busy = True
+            else:
+                conn.send(("busy").encode())
+                return
+                
             while True:
                 data = conn.recv(1024)
-                connected_workers[0].w_socket.send(data)
+                choosedWorker.w_socket.send(data)
                 
                 if len(data) < 1024:
-                    result = connected_workers[0].w_socket.recv(1024)
+                    result = choosedWorker.w_socket.recv(1024)
                     print(f"result {result}")
                     conn.send(result)
+                    choosedWorker.busy = False
                     break  
+            
         else:
-            connected_workers[0].w_socket.send((b''))
+            # connected_workers[0].w_socket.send((b''))
             conn.close()
             print("closed connection")
             break
@@ -101,7 +111,13 @@ def extract_workers_config(path) -> list[WorkerServer]:
    
     return result
 
-
+def chooseWorker( workers : list[WorkerServer]):
+    res = None
+    for w in workers:
+        if not w.busy:
+            res = w 
+            break       
+    return res
 
 if __name__ == "__main__":
     host,port,name = c.getParams()

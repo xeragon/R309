@@ -104,11 +104,15 @@ class Worker(QRunnable):
                 
                 uploadedWidget.setText(f"{filename} uploaded")
                 uploadedWidget.setBackground(QColor("lightgreen")) 
-                
+            elif answer == "busy":
+                dlg = ErrorDialog("all workers are busy try again later") 
+                dlg.exec()   
+                raise Exception  
             else:
-                raise Exception
-
-                
+                dlg = ErrorDialog("An unexcpected error happened") 
+                dlg.exec()
+                raise Exception   
+    
         except Exception as e:
             print(f"error : {e}")
             uploadedWidget.setText(f"{filename} failed")

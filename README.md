@@ -1,5 +1,13 @@
 # SAE_R309
 
+## Guide d'utilisation
 
-## requirements
+## Features
+
+## Améliorations 
+- load balancing
+- sécurité 
+- file d'attente
+
+## Requirements
 pip install pyqt5

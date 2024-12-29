@@ -8,7 +8,7 @@ import json
 
 class WorkerServer():
     w_socket : socket.socket
-    
+    busy = False
     def __init__(self,host : str ,port : int,name : str):
         self.host = host
         self.port = port
