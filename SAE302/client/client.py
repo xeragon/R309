@@ -90,18 +90,16 @@ class Worker(QRunnable):
             answer = self.client_socket.recv(1024).decode()
             if(answer == "rdy"):
                 data = fi.read(1024) 
-
                 while data: 
                     self.client_socket.send(data)
                     data = fi.read(1024) 
-
+                    
                 fi.close() 
-            
+                
                 answer = self.client_socket.recv(1024).decode()
                 # self.upload_label.setText(answer)
                 print(f"received from server : {answer}")
                 self.responses_list.append(answer)
-                
                 uploadedWidget.setText(f"{filename} uploaded")
                 uploadedWidget.setBackground(QColor("lightgreen")) 
             elif answer == "busy":
