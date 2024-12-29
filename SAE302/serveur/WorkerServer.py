@@ -72,7 +72,6 @@ def main(host,port,name):
         match file_extension:
             case "py":
                 s = subprocess.run(["python",filename],capture_output=True,encoding="locale")
-                text = f"executed command : {str(s.args)} output : {s.stdout} errors : {s.stderr}"
                 res = json.dumps({
                     "command": s.args,
                     "output": s.stdout,
